@@ -1,0 +1,22 @@
+{
+  "name": "patty-k1-speed-app",
+  "version": "1.0.0",
+  "description": "Parse K1 Speed race result emails",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/index.js",
+    "auth": "node src/auth.js",
+    "fetch": "node src/fetchEmails.js",
+    "parse": "node src/parseResults.js",
+    "test": "node --test tests/"
+  },
+  "dependencies": {
+    "googleapis": "^129.0.0",
+    "imap": "^0.8.19",
+    "mailparser": "^3.6.5",
+    "dotenv": "^16.3.1",
+    "open": "^10.0.0"
+  },
+  "devDependencies": {}
+}
