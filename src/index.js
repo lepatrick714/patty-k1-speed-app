@@ -18,10 +18,11 @@ const __dirname = dirname(__filename);
  * @param {number} [options.limit=50] - Max emails to fetch
  * @param {Date} [options.since] - Only fetch since date
  * @param {boolean} [options.saveJson=false] - Save results to JSON file
+ * @param {boolean} [options.debug=false] - Show raw email body for debugging
  * @returns {Promise<import('./types.js').ParsedRaceEmail[]>}
  */
 export async function fetchAndParseRaces(options = {}) {
-  const { limit = 50, since, saveJson = false } = options;
+  const { limit = 50, since, saveJson = false, debug = false } = options;
 
   console.log('Fetching K1 Speed race emails...\n');
 
@@ -34,10 +35,19 @@ export async function fetchAndParseRaces(options = {}) {
 
   console.log(`Processing ${emails.length} email(s)...\n`);
 
+  // Debug mode - show raw email body
+  if (debug && emails.length > 0) {
+    console.log('=== DEBUG: Raw email text body ===');
+    console.log(emails[0].text?.substring(0, 2000) || '(no text body)');
+    console.log('\n=== DEBUG: Raw email HTML body (first 2000 chars) ===');
+    console.log(emails[0].html?.substring(0, 2000) || '(no html body)');
+    console.log('=== END DEBUG ===\n');
+  }
+
   const parsedRaces = [];
 
   for (const email of emails) {
-    const parsed = parseRaceEmail(email.subject, email.text);
+    const parsed = parseRaceEmail(email.subject, email.text, email.html);
 
     if (parsed) {
       parsedRaces.push(parsed);
@@ -109,10 +119,11 @@ export function getRacerStats(races, racerName) {
 if (process.argv[1] && process.argv[1].includes('index')) {
   const args = process.argv.slice(2);
   const saveJson = args.includes('--save');
+  const debug = args.includes('--debug');
   const limitArg = args.find((a) => a.startsWith('--limit='));
   const limit = limitArg ? parseInt(limitArg.split('=')[1], 10) : 50;
 
-  fetchAndParseRaces({ limit, saveJson })
+  fetchAndParseRaces({ limit, saveJson, debug })
     .then((races) => {
       console.log(`\n${'='.repeat(60)}`);
       console.log(`Total races parsed: ${races.length}`);

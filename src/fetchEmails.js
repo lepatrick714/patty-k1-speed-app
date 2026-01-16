@@ -69,13 +69,26 @@ export async function fetchK1SpeedEmails(options = {}) {
     const emails = [];
 
     imap.once('ready', () => {
-      imap.openBox('INBOX', true, (err) => {
+      // Use "All Mail" to search across all folders/labels
+      // Gmail stores all emails here regardless of labels
+      imap.openBox('[Gmail]/All Mail', true, (err) => {
         if (err) {
-          imap.end();
-          reject(err);
+          // Fallback to INBOX if All Mail doesn't exist
+          console.log('Could not open All Mail, falling back to INBOX...');
+          imap.openBox('INBOX', true, (inboxErr) => {
+            if (inboxErr) {
+              imap.end();
+              reject(inboxErr);
+              return;
+            }
+            searchAndFetch();
+          });
           return;
         }
+        searchAndFetch();
+      });
 
+      function searchAndFetch() {
         // Build search criteria
         const searchCriteria = [
           ['SUBJECT', 'Your Race Results at K1 Speed'],
@@ -136,7 +149,7 @@ export async function fetchK1SpeedEmails(options = {}) {
             imap.end();
           });
         });
-      });
+      }
     });
 
     imap.once('error', (err) => {

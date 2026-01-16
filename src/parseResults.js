@@ -92,12 +92,12 @@ export function parseResultsTable(body) {
     const trimmed = line.trim();
 
     // Skip empty lines and header row
-    if (!trimmed || trimmed.startsWith('#\t') || trimmed.startsWith('# ')) {
+    if (!trimmed || trimmed.startsWith('#\t') || trimmed.startsWith('# ') || trimmed.startsWith('#	')) {
       continue;
     }
 
     // Try to parse if line starts with a number (position)
-    if (/^\d+\s/.test(trimmed) || /^\d+\t/.test(trimmed)) {
+    if (/^\d+[\s\t]/.test(trimmed)) {
       const result = parseResultRow(trimmed);
       if (result) {
         results.push(result);
@@ -106,6 +106,44 @@ export function parseResultsTable(body) {
   }
 
   return results;
+}
+
+/**
+ * Extract text content from HTML, preserving table structure
+ * @param {string} html - HTML content
+ * @returns {string} Extracted text
+ */
+export function extractTextFromHtml(html) {
+  if (!html) return '';
+
+  // Remove style and script tags and their content
+  let text = html.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '');
+  text = text.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '');
+
+  // Convert table cells to tab-separated values
+  text = text.replace(/<\/th>\s*<th[^>]*>/gi, '\t');
+  text = text.replace(/<\/td>\s*<td[^>]*>/gi, '\t');
+  
+  // Convert table rows to newlines
+  text = text.replace(/<\/tr>/gi, '\n');
+  text = text.replace(/<tr[^>]*>/gi, '');
+  
+  // Remove remaining HTML tags
+  text = text.replace(/<[^>]+>/g, '');
+  
+  // Decode HTML entities
+  text = text.replace(/&nbsp;/g, ' ');
+  text = text.replace(/&amp;/g, '&');
+  text = text.replace(/&lt;/g, '<');
+  text = text.replace(/&gt;/g, '>');
+  text = text.replace(/&quot;/g, '"');
+  text = text.replace(/&#(\d+);/g, (_, num) => String.fromCharCode(num));
+  
+  // Clean up whitespace
+  text = text.replace(/[ \t]+/g, '\t');
+  text = text.replace(/\n\s*\n/g, '\n');
+  
+  return text.trim();
 }
 
 /**

@@ -20,8 +20,11 @@ const __dirname = dirname(__filename);
 // Token storage path
 const TOKEN_PATH = join(__dirname, '..', '.gmail-token.json');
 
-// Gmail IMAP scope - allows full mail access
-const SCOPES = ['https://mail.google.com/'];
+// Gmail IMAP scope + email scope for getting user info
+const SCOPES = [
+  'https://mail.google.com/',
+  'https://www.googleapis.com/auth/userinfo.email',
+];
 
 /**
  * Create OAuth2 client from environment variables
