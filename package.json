@@ -2,14 +2,17 @@
   "name": "patty-k1-speed-app",
   "version": "1.0.0",
   "description": "Parse K1 Speed race result emails",
-  "main": "src/index.js",
+  "main": "dist/index.js",
   "type": "module",
   "scripts": {
-    "start": "node src/index.js",
-    "auth": "node src/auth.js",
-    "fetch": "node src/fetchEmails.js",
-    "parse": "node src/parseResults.js",
-    "test": "node --test tests/"
+    "build": "tsc",
+    "start": "npm run build && node dist/index.js",
+    "dev": "tsx src/index.ts",
+    "auth": "tsx src/auth.ts",
+    "fetch": "tsx src/fetchEmails.ts",
+    "parse": "tsx src/parseResults.ts",
+    "test": "tsx --test tests/*.test.ts",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "googleapis": "^129.0.0",
@@ -18,5 +21,11 @@
     "dotenv": "^16.3.1",
     "open": "^10.0.0"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "@types/imap": "^0.8.40",
+    "@types/mailparser": "^3.4.4",
+    "@types/node": "^20.10.0",
+    "tsx": "^4.7.0",
+    "typescript": "^5.3.0"
+  }
 }

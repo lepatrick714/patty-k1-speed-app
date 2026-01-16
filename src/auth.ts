@@ -3,8 +3,8 @@
  * Handles OAuth flow and token management
  */
 
-import { google } from 'googleapis';
-import { createServer } from 'http';
+import { google, Auth } from 'googleapis';
+import { createServer, IncomingMessage, ServerResponse } from 'http';
 import { URL } from 'url';
 import { readFileSync, writeFileSync, existsSync } from 'fs';
 import { join, dirname } from 'path';
@@ -26,11 +26,18 @@ const SCOPES = [
   'https://www.googleapis.com/auth/userinfo.email',
 ];
 
+interface TokenData {
+  access_token?: string | null;
+  refresh_token?: string | null;
+  expiry_date?: number | null;
+  token_type?: string | null;
+  scope?: string;
+}
+
 /**
  * Create OAuth2 client from environment variables
- * @returns {import('googleapis').Auth.OAuth2Client}
  */
-export function createOAuth2Client() {
+export function createOAuth2Client(): Auth.OAuth2Client {
   const clientId = process.env.GOOGLE_CLIENT_ID;
   const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
   const redirectUri = process.env.GOOGLE_REDIRECT_URI || 'http://localhost:3000/oauth2callback';
@@ -47,25 +54,24 @@ export function createOAuth2Client() {
 
 /**
  * Load saved tokens from disk
- * @returns {Object|null} Token object or null if not found
  */
-export function loadSavedToken() {
+export function loadSavedToken(): TokenData | null {
   try {
     if (existsSync(TOKEN_PATH)) {
       const content = readFileSync(TOKEN_PATH, 'utf-8');
-      return JSON.parse(content);
+      return JSON.parse(content) as TokenData;
     }
   } catch (err) {
-    console.error('Error loading saved token:', err.message);
+    const error = err as Error;
+    console.error('Error loading saved token:', error.message);
   }
   return null;
 }
 
 /**
  * Save tokens to disk
- * @param {Object} tokens - Token object from OAuth2
  */
-export function saveToken(tokens) {
+export function saveToken(tokens: TokenData): void {
   writeFileSync(TOKEN_PATH, JSON.stringify(tokens, null, 2));
   console.log('Token saved to', TOKEN_PATH);
 }
@@ -73,10 +79,8 @@ export function saveToken(tokens) {
 /**
  * Get authenticated OAuth2 client
  * Will use saved token if available, otherwise prompts for auth
- * @param {boolean} [forceNew=false] - Force new authentication
- * @returns {Promise<import('googleapis').Auth.OAuth2Client>}
  */
-export async function getAuthenticatedClient(forceNew = false) {
+export async function getAuthenticatedClient(forceNew = false): Promise<Auth.OAuth2Client> {
   const oauth2Client = createOAuth2Client();
   
   // Try to load existing token
@@ -107,10 +111,8 @@ export async function getAuthenticatedClient(forceNew = false) {
 
 /**
  * Authenticate using browser-based OAuth flow
- * @param {import('googleapis').Auth.OAuth2Client} oauth2Client
- * @returns {Promise<import('googleapis').Auth.OAuth2Client>}
  */
-async function authenticateWithBrowser(oauth2Client) {
+async function authenticateWithBrowser(oauth2Client: Auth.OAuth2Client): Promise<Auth.OAuth2Client> {
   return new Promise((resolve, reject) => {
     // Generate auth URL
     const authUrl = oauth2Client.generateAuthUrl({
@@ -122,9 +124,9 @@ async function authenticateWithBrowser(oauth2Client) {
     console.log('\n🔐 Opening browser for Google authentication...\n');
 
     // Create local server to receive callback
-    const server = createServer(async (req, res) => {
+    const server = createServer(async (req: IncomingMessage, res: ServerResponse) => {
       try {
-        const url = new URL(req.url, 'http://localhost:3000');
+        const url = new URL(req.url || '', 'http://localhost:3000');
         
         if (url.pathname === '/oauth2callback') {
           const code = url.searchParams.get('code');
@@ -159,8 +161,9 @@ async function authenticateWithBrowser(oauth2Client) {
           }
         }
       } catch (err) {
+        const error = err as Error;
         res.writeHead(500, { 'Content-Type': 'text/html' });
-        res.end(`<h1>Error</h1><p>${err.message}</p>`);
+        res.end(`<h1>Error</h1><p>${error.message}</p>`);
         server.close();
         reject(err);
       }
@@ -182,9 +185,8 @@ async function authenticateWithBrowser(oauth2Client) {
 
 /**
  * Get access token for IMAP XOAUTH2
- * @returns {Promise<string>} Access token
  */
-export async function getAccessToken() {
+export async function getAccessToken(): Promise<string> {
   const client = await getAuthenticatedClient();
   const { token } = await client.getAccessToken();
   
@@ -197,29 +199,29 @@ export async function getAccessToken() {
 
 /**
  * Get user's email address from token info
- * @returns {Promise<string>} Email address
  */
-export async function getUserEmail() {
+export async function getUserEmail(): Promise<string> {
   const client = await getAuthenticatedClient();
   const oauth2 = google.oauth2({ version: 'v2', auth: client });
   const { data } = await oauth2.userinfo.get();
-  return data.email;
+  return data.email || '';
 }
 
 // Run directly to authenticate
-if (process.argv[1] && process.argv[1].includes('auth')) {
+const isMainModule = process.argv[1]?.includes('auth');
+if (isMainModule) {
   const forceNew = process.argv.includes('--force');
   
   console.log('K1 Speed App - Google OAuth2 Setup\n');
   
   getAuthenticatedClient(forceNew)
-    .then(async (client) => {
+    .then(async () => {
       const email = await getUserEmail();
       console.log(`\n✅ Successfully authenticated as: ${email}`);
       console.log('\nYou can now run: npm start');
       process.exit(0);
     })
-    .catch((err) => {
+    .catch((err: Error) => {
       console.error('\n❌ Authentication failed:', err.message);
       process.exit(1);
     });

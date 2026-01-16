@@ -4,57 +4,41 @@
  */
 
 import Imap from 'imap';
-import { simpleParser } from 'mailparser';
+import { simpleParser, ParsedMail } from 'mailparser';
 import { config } from 'dotenv';
 import { getAccessToken, getUserEmail } from './auth.js';
+import type { FetchedEmail, FetchOptions } from './types.js';
 
 config();
 
 /**
- * @typedef {Object} FetchedEmail
- * @property {string} subject - Email subject
- * @property {string} text - Plain text body
- * @property {string} html - HTML body
- * @property {Date} date - Email date
- */
-
-/**
  * Generate XOAUTH2 token for IMAP authentication
- * @param {string} user - Email address
- * @param {string} accessToken - OAuth2 access token
- * @returns {string} Base64 encoded XOAUTH2 string
  */
-function generateXOAuth2Token(user, accessToken) {
+function generateXOAuth2Token(user: string, accessToken: string): string {
   const authString = `user=${user}\x01auth=Bearer ${accessToken}\x01\x01`;
   return Buffer.from(authString).toString('base64');
 }
 
 /**
  * Create IMAP connection configuration with OAuth2
- * @param {string} email - User's email address
- * @param {string} accessToken - OAuth2 access token
- * @returns {Object} IMAP config object
  */
-function getImapConfig(email, accessToken) {
+function getImapConfig(email: string, accessToken: string): Imap.Config {
   return {
     user: email,
+    password: '', // Not used with xoauth2
     xoauth2: generateXOAuth2Token(email, accessToken),
     host: 'imap.gmail.com',
     port: 993,
     tls: true,
     tlsOptions: { rejectUnauthorized: false },
     authTimeout: 10000,
-  };
+  } as Imap.Config;
 }
 
 /**
  * Search for K1 Speed race result emails
- * @param {Object} options - Search options
- * @param {number} [options.limit=50] - Maximum emails to fetch
- * @param {Date} [options.since] - Only fetch emails since this date
- * @returns {Promise<FetchedEmail[]>}
  */
-export async function fetchK1SpeedEmails(options = {}) {
+export async function fetchK1SpeedEmails(options: FetchOptions = {}): Promise<FetchedEmail[]> {
   const { limit = 50, since } = options;
 
   // Get OAuth2 credentials
@@ -66,7 +50,7 @@ export async function fetchK1SpeedEmails(options = {}) {
   return new Promise((resolve, reject) => {
     const imapConfig = getImapConfig(email, accessToken);
     const imap = new Imap(imapConfig);
-    const emails = [];
+    const emails: FetchedEmail[] = [];
 
     imap.once('ready', () => {
       // Use "All Mail" to search across all folders/labels
@@ -88,14 +72,14 @@ export async function fetchK1SpeedEmails(options = {}) {
         searchAndFetch();
       });
 
-      function searchAndFetch() {
+      function searchAndFetch(): void {
         // Build search criteria
-        const searchCriteria = [
+        const searchCriteria: (string | string[])[] = [
           ['SUBJECT', 'Your Race Results at K1 Speed'],
         ];
 
         if (since) {
-          searchCriteria.push(['SINCE', since]);
+          searchCriteria.push(['SINCE', since.toISOString()]);
         }
 
         imap.search(searchCriteria, (searchErr, results) => {
@@ -124,7 +108,8 @@ export async function fetchK1SpeedEmails(options = {}) {
 
           fetch.on('message', (msg) => {
             msg.on('body', (stream) => {
-              simpleParser(stream, (parseErr, parsed) => {
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              simpleParser(stream as any, (parseErr: Error | null, parsed: ParsedMail) => {
                 if (parseErr) {
                   console.error('Error parsing email:', parseErr);
                   return;
@@ -133,7 +118,7 @@ export async function fetchK1SpeedEmails(options = {}) {
                 emails.push({
                   subject: parsed.subject || '',
                   text: parsed.text || '',
-                  html: parsed.html || '',
+                  html: typeof parsed.html === 'string' ? parsed.html : '',
                   date: parsed.date || new Date(),
                 });
               });
@@ -168,21 +153,21 @@ export async function fetchK1SpeedEmails(options = {}) {
 
 /**
  * Fetch emails and return as array (main entry point)
- * @param {Object} options - Fetch options
- * @returns {Promise<FetchedEmail[]>}
  */
-export async function getEmails(options = {}) {
+export async function getEmails(options: FetchOptions = {}): Promise<FetchedEmail[]> {
   try {
     const emails = await fetchK1SpeedEmails(options);
     return emails;
   } catch (error) {
-    console.error('Error fetching emails:', error.message);
+    const err = error as Error;
+    console.error('Error fetching emails:', err.message);
     throw error;
   }
 }
 
 // Run directly for testing
-if (process.argv[1] && process.argv[1].includes('fetchEmails')) {
+const isMainModule = process.argv[1]?.includes('fetchEmails');
+if (isMainModule) {
   console.log('Fetching K1 Speed emails...\n');
 
   getEmails({ limit: 10 })
@@ -194,7 +179,7 @@ if (process.argv[1] && process.argv[1].includes('fetchEmails')) {
         console.log();
       }
     })
-    .catch((err) => {
+    .catch((err: Error) => {
       console.error('Failed:', err.message);
       process.exit(1);
     });

@@ -8,20 +8,15 @@ import { parseRaceEmail, formatResults } from './parseResults.js';
 import { writeFileSync, existsSync, mkdirSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import type { ParsedRaceEmail, ParseOptions, RacerStats, RacerRaceResult } from './types.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 /**
  * Fetch and parse all K1 Speed race emails
- * @param {Object} options - Options
- * @param {number} [options.limit=50] - Max emails to fetch
- * @param {Date} [options.since] - Only fetch since date
- * @param {boolean} [options.saveJson=false] - Save results to JSON file
- * @param {boolean} [options.debug=false] - Show raw email body for debugging
- * @returns {Promise<import('./types.js').ParsedRaceEmail[]>}
  */
-export async function fetchAndParseRaces(options = {}) {
+export async function fetchAndParseRaces(options: ParseOptions = {}): Promise<ParsedRaceEmail[]> {
   const { limit = 50, since, saveJson = false, debug = false } = options;
 
   console.log('Fetching K1 Speed race emails...\n');
@@ -44,7 +39,7 @@ export async function fetchAndParseRaces(options = {}) {
     console.log('=== END DEBUG ===\n');
   }
 
-  const parsedRaces = [];
+  const parsedRaces: ParsedRaceEmail[] = [];
 
   for (const email of emails) {
     const parsed = parseRaceEmail(email.subject, email.text, email.html);
@@ -74,12 +69,9 @@ export async function fetchAndParseRaces(options = {}) {
 
 /**
  * Get race statistics for a specific racer
- * @param {import('./types.js').ParsedRaceEmail[]} races - Array of parsed races
- * @param {string} racerName - Racer name to search for
- * @returns {Object} Statistics object
  */
-export function getRacerStats(races, racerName) {
-  const racerResults = [];
+export function getRacerStats(races: ParsedRaceEmail[], racerName: string): RacerStats {
+  const racerResults: RacerRaceResult[] = [];
 
   for (const race of races) {
     const result = race.results.find(
@@ -116,7 +108,8 @@ export function getRacerStats(races, racerName) {
 }
 
 // Main execution
-if (process.argv[1] && process.argv[1].includes('index')) {
+const isMainModule = process.argv[1]?.includes('index');
+if (isMainModule) {
   const args = process.argv.slice(2);
   const saveJson = args.includes('--save');
   const debug = args.includes('--debug');
@@ -130,7 +123,7 @@ if (process.argv[1] && process.argv[1].includes('index')) {
 
       if (races.length > 0) {
         // Show unique racers
-        const allRacers = new Set();
+        const allRacers = new Set<string>();
         for (const race of races) {
           for (const result of race.results) {
             allRacers.add(result.racer);
@@ -140,7 +133,7 @@ if (process.argv[1] && process.argv[1].includes('index')) {
         console.log(`Racers: ${[...allRacers].join(', ')}`);
       }
     })
-    .catch((err) => {
+    .catch((err: Error) => {
       console.error('Error:', err.message);
       process.exit(1);
     });

@@ -3,13 +3,13 @@
  * Parses race result tables from K1 Speed emails
  */
 
+import type { RaceInfo, RaceResult, ParsedRaceEmail } from './types.js';
+
 /**
  * Parse the email subject to extract race info
  * Format: "Your Race Results at K1 Speed Anaheim T1 12/29/25 07:17 PM"
- * @param {string} subject - Email subject line
- * @returns {import('./types.js').RaceInfo | null}
  */
-export function parseSubject(subject) {
+export function parseSubject(subject: string): RaceInfo | null {
   // Pattern: "Your Race Results at K1 Speed <Location> <Track> <Date> <Time>"
   const pattern = /Your Race Results at K1 Speed\s+(.+?)\s+(T\d+)\s+(\d{1,2}\/\d{1,2}\/\d{2,4})\s+(\d{1,2}:\d{2}\s*[AP]M)/i;
   const match = subject.match(pattern);
@@ -28,9 +28,9 @@ export function parseSubject(subject) {
   const timeMatch = timeStr.match(/(\d{1,2}):(\d{2})\s*([AP]M)/i);
   if (!timeMatch) return null;
 
-  let [, hours, minutes, ampm] = timeMatch;
-  hours = parseInt(hours, 10);
-  minutes = parseInt(minutes, 10);
+  const [, hoursStr, minutesStr, ampm] = timeMatch;
+  let hours = parseInt(hoursStr, 10);
+  const minutes = parseInt(minutesStr, 10);
 
   if (ampm.toUpperCase() === 'PM' && hours !== 12) {
     hours += 12;
@@ -51,10 +51,8 @@ export function parseSubject(subject) {
 /**
  * Parse a single result row from the race table
  * Format: "#\tRacer\tBest Time\tBest Lap\tLaps\tAvg.\tGap\tK1RS"
- * @param {string} line - A single line from the results table
- * @returns {import('./types.js').RaceResult | null}
  */
-export function parseResultRow(line) {
+export function parseResultRow(line: string): RaceResult | null {
   // Split by tabs or multiple spaces
   const parts = line.split(/\t+|\s{2,}/).map(p => p.trim()).filter(Boolean);
 
@@ -81,11 +79,9 @@ export function parseResultRow(line) {
 
 /**
  * Parse the full race results table from email body
- * @param {string} body - Email body text
- * @returns {import('./types.js').RaceResult[]}
  */
-export function parseResultsTable(body) {
-  const results = [];
+export function parseResultsTable(body: string): RaceResult[] {
+  const results: RaceResult[] = [];
   const lines = body.split('\n');
 
   for (const line of lines) {
@@ -110,10 +106,8 @@ export function parseResultsTable(body) {
 
 /**
  * Extract text content from HTML, preserving table structure
- * @param {string} html - HTML content
- * @returns {string} Extracted text
  */
-export function extractTextFromHtml(html) {
+export function extractTextFromHtml(html: string): string {
   if (!html) return '';
 
   // Remove style and script tags and their content
@@ -142,7 +136,7 @@ export function extractTextFromHtml(html) {
   text = text.replace(/&lt;/g, '<');
   text = text.replace(/&gt;/g, '>');
   text = text.replace(/&quot;/g, '"');
-  text = text.replace(/&#(\d+);/g, (_, num) => String.fromCharCode(num));
+  text = text.replace(/&#(\d+);/g, (_, num) => String.fromCharCode(parseInt(num, 10)));
   
   // Clean up whitespace - convert multiple spaces to single tab
   text = text.replace(/[ \t]+/g, '\t');
@@ -153,11 +147,9 @@ export function extractTextFromHtml(html) {
 
 /**
  * Parse results from HTML table format used by K1 Speed emails
- * @param {string} content - Email content (text or html)
- * @returns {import('./types.js').RaceResult[]}
  */
-export function parseResultsFromHtml(content) {
-  const results = [];
+export function parseResultsFromHtml(content: string): RaceResult[] {
+  const results: RaceResult[] = [];
   
   // Find the race results table - look for rows with racer data
   // Pattern: <tr>...<td>1</td><td>Name</td><td>Time</td>...</tr>
@@ -170,12 +162,12 @@ export function parseResultsFromHtml(content) {
     
     // Extract cells
     const cellPattern = /<td[^>]*>([\s\S]*?)<\/td>/gi;
-    const cells = [];
+    const cells: string[] = [];
     let match;
     
     while ((match = cellPattern.exec(row)) !== null) {
       // Clean up cell content - remove tags, trim
-      let cellContent = match[1]
+      const cellContent = match[1]
         .replace(/<[^>]+>/g, '')  // Remove HTML tags
         .replace(/&nbsp;/g, ' ')
         .trim();
@@ -205,12 +197,8 @@ export function parseResultsFromHtml(content) {
 
 /**
  * Parse a complete K1 Speed race email
- * @param {string} subject - Email subject
- * @param {string} textBody - Email plain text body
- * @param {string} [htmlBody] - Email HTML body (fallback)
- * @returns {import('./types.js').ParsedRaceEmail | null}
  */
-export function parseRaceEmail(subject, textBody, htmlBody) {
+export function parseRaceEmail(subject: string, textBody?: string, htmlBody?: string): ParsedRaceEmail | null {
   const raceInfo = parseSubject(subject);
 
   if (!raceInfo) {
@@ -239,10 +227,8 @@ export function parseRaceEmail(subject, textBody, htmlBody) {
 
 /**
  * Format race results as a readable string
- * @param {import('./types.js').ParsedRaceEmail} parsed - Parsed race email
- * @returns {string}
  */
-export function formatResults(parsed) {
+export function formatResults(parsed: ParsedRaceEmail): string {
   const { raceInfo, results } = parsed;
 
   let output = `\n${'='.repeat(60)}\n`;
@@ -268,7 +254,8 @@ export function formatResults(parsed) {
 }
 
 // Allow running directly for testing
-if (process.argv[1] && process.argv[1].includes('parseResults')) {
+const isMainModule = process.argv[1]?.includes('parseResults');
+if (isMainModule) {
   // Example test
   const testSubject = 'Your Race Results at K1 Speed Anaheim T1 12/29/25 07:17 PM';
   const testBody = `
