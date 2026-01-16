@@ -119,14 +119,19 @@ export function extractTextFromHtml(html) {
   // Remove style and script tags and their content
   let text = html.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '');
   text = text.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '');
+  
+  // Remove bold tags but keep content
+  text = text.replace(/<\/?b>/gi, '');
+  text = text.replace(/<\/?strong>/gi, '');
 
   // Convert table cells to tab-separated values
   text = text.replace(/<\/th>\s*<th[^>]*>/gi, '\t');
   text = text.replace(/<\/td>\s*<td[^>]*>/gi, '\t');
   
-  // Convert table rows to newlines
-  text = text.replace(/<\/tr>/gi, '\n');
+  // Convert table rows to newlines  
+  text = text.replace(/<\/tr>\s*<tr[^>]*>/gi, '\n');
   text = text.replace(/<tr[^>]*>/gi, '');
+  text = text.replace(/<\/tr>/gi, '\n');
   
   // Remove remaining HTML tags
   text = text.replace(/<[^>]+>/g, '');
@@ -139,7 +144,7 @@ export function extractTextFromHtml(html) {
   text = text.replace(/&quot;/g, '"');
   text = text.replace(/&#(\d+);/g, (_, num) => String.fromCharCode(num));
   
-  // Clean up whitespace
+  // Clean up whitespace - convert multiple spaces to single tab
   text = text.replace(/[ \t]+/g, '\t');
   text = text.replace(/\n\s*\n/g, '\n');
   
@@ -147,24 +152,88 @@ export function extractTextFromHtml(html) {
 }
 
 /**
+ * Parse results from HTML table format used by K1 Speed emails
+ * @param {string} content - Email content (text or html)
+ * @returns {import('./types.js').RaceResult[]}
+ */
+export function parseResultsFromHtml(content) {
+  const results = [];
+  
+  // Find the race results table - look for rows with racer data
+  // Pattern: <tr>...<td>1</td><td>Name</td><td>Time</td>...</tr>
+  const rowPattern = /<tr[^>]*>[\s\S]*?<\/tr>/gi;
+  const rows = content.match(rowPattern) || [];
+  
+  for (const row of rows) {
+    // Skip header rows
+    if (row.includes('<th')) continue;
+    
+    // Extract cells
+    const cellPattern = /<td[^>]*>([\s\S]*?)<\/td>/gi;
+    const cells = [];
+    let match;
+    
+    while ((match = cellPattern.exec(row)) !== null) {
+      // Clean up cell content - remove tags, trim
+      let cellContent = match[1]
+        .replace(/<[^>]+>/g, '')  // Remove HTML tags
+        .replace(/&nbsp;/g, ' ')
+        .trim();
+      cells.push(cellContent);
+    }
+    
+    // Need at least 8 columns: #, Racer, Best Time, Best Lap, Laps, Avg, Gap, K1RS
+    if (cells.length >= 8) {
+      const position = parseInt(cells[0], 10);
+      if (!isNaN(position) && position > 0 && position <= 20) {
+        results.push({
+          position,
+          racer: cells[1],
+          bestTime: cells[2],
+          bestLap: parseInt(cells[3], 10),
+          laps: parseInt(cells[4], 10),
+          avg: cells[5],
+          gap: cells[6],
+          k1rs: cells[7],
+        });
+      }
+    }
+  }
+  
+  return results;
+}
+
+/**
  * Parse a complete K1 Speed race email
  * @param {string} subject - Email subject
- * @param {string} body - Email body
+ * @param {string} textBody - Email plain text body
+ * @param {string} [htmlBody] - Email HTML body (fallback)
  * @returns {import('./types.js').ParsedRaceEmail | null}
  */
-export function parseRaceEmail(subject, body) {
+export function parseRaceEmail(subject, textBody, htmlBody) {
   const raceInfo = parseSubject(subject);
 
   if (!raceInfo) {
     return null;
   }
 
-  const results = parseResultsTable(body);
+  // Try parsing HTML table from text body (K1 Speed embeds HTML in text)
+  let results = parseResultsFromHtml(textBody || '');
+  
+  // If no results from text, try the HTML body
+  if (results.length === 0 && htmlBody) {
+    results = parseResultsFromHtml(htmlBody);
+  }
+  
+  // Fallback: try plain text parsing
+  if (results.length === 0) {
+    results = parseResultsTable(textBody || '');
+  }
 
   return {
     raceInfo,
     results,
-    rawBody: body,
+    rawBody: textBody || htmlBody || '',
   };
 }
 
