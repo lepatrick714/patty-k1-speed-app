@@ -1,0 +1,168 @@
+"use strict";
+/**
+ * K1 Speed Email Fetcher
+ * Fetches K1 Speed race result emails via IMAP with OAuth2
+ */
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.fetchK1SpeedEmails = fetchK1SpeedEmails;
+exports.getEmails = getEmails;
+const imap_1 = __importDefault(require("imap"));
+const mailparser_1 = require("mailparser");
+const dotenv_1 = require("dotenv");
+const auth_js_1 = require("./auth.js");
+(0, dotenv_1.config)();
+/**
+ * Generate XOAUTH2 token for IMAP authentication
+ */
+function generateXOAuth2Token(user, accessToken) {
+    const authString = `user=${user}\x01auth=Bearer ${accessToken}\x01\x01`;
+    return Buffer.from(authString).toString('base64');
+}
+/**
+ * Create IMAP connection configuration with OAuth2
+ */
+function getImapConfig(email, accessToken) {
+    return {
+        user: email,
+        password: '', // Not used with xoauth2
+        xoauth2: generateXOAuth2Token(email, accessToken),
+        host: 'imap.gmail.com',
+        port: 993,
+        tls: true,
+        tlsOptions: { rejectUnauthorized: false },
+        authTimeout: 10000,
+    };
+}
+/**
+ * Search for K1 Speed race result emails
+ */
+async function fetchK1SpeedEmails(options = {}) {
+    const { limit = 50, since } = options;
+    // Get OAuth2 credentials
+    console.log('Authenticating with Gmail...');
+    const accessToken = await (0, auth_js_1.getAccessToken)();
+    const email = await (0, auth_js_1.getUserEmail)();
+    console.log(`Authenticated as: ${email}\n`);
+    return new Promise((resolve, reject) => {
+        const imapConfig = getImapConfig(email, accessToken);
+        const imap = new imap_1.default(imapConfig);
+        const emails = [];
+        imap.once('ready', () => {
+            // Use "All Mail" to search across all folders/labels
+            // Gmail stores all emails here regardless of labels
+            imap.openBox('[Gmail]/All Mail', true, (err) => {
+                if (err) {
+                    // Fallback to INBOX if All Mail doesn't exist
+                    console.log('Could not open All Mail, falling back to INBOX...');
+                    imap.openBox('INBOX', true, (inboxErr) => {
+                        if (inboxErr) {
+                            imap.end();
+                            reject(inboxErr);
+                            return;
+                        }
+                        searchAndFetch();
+                    });
+                    return;
+                }
+                searchAndFetch();
+            });
+            function searchAndFetch() {
+                // Build search criteria
+                const searchCriteria = [
+                    ['SUBJECT', 'Your Race Results at K1 Speed'],
+                ];
+                if (since) {
+                    searchCriteria.push(['SINCE', since.toISOString()]);
+                }
+                imap.search(searchCriteria, (searchErr, results) => {
+                    if (searchErr) {
+                        imap.end();
+                        reject(searchErr);
+                        return;
+                    }
+                    if (!results || results.length === 0) {
+                        console.log('No K1 Speed emails found.');
+                        imap.end();
+                        resolve([]);
+                        return;
+                    }
+                    console.log(`Found ${results.length} K1 Speed email(s)`);
+                    // Limit results
+                    const toFetch = results.slice(-limit);
+                    const fetch = imap.fetch(toFetch, {
+                        bodies: '',
+                        struct: true,
+                    });
+                    fetch.on('message', (msg) => {
+                        msg.on('body', (stream) => {
+                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                            (0, mailparser_1.simpleParser)(stream, (parseErr, parsed) => {
+                                if (parseErr) {
+                                    console.error('Error parsing email:', parseErr);
+                                    return;
+                                }
+                                emails.push({
+                                    subject: parsed.subject || '',
+                                    text: parsed.text || '',
+                                    html: typeof parsed.html === 'string' ? parsed.html : '',
+                                    date: parsed.date || new Date(),
+                                });
+                            });
+                        });
+                    });
+                    fetch.once('error', (fetchErr) => {
+                        imap.end();
+                        reject(fetchErr);
+                    });
+                    fetch.once('end', () => {
+                        imap.end();
+                    });
+                });
+            }
+        });
+        imap.once('error', (err) => {
+            reject(err);
+        });
+        imap.once('end', () => {
+            // Sort by date, newest first
+            emails.sort((a, b) => b.date.getTime() - a.date.getTime());
+            resolve(emails);
+        });
+        imap.connect();
+    });
+}
+/**
+ * Fetch emails and return as array (main entry point)
+ */
+async function getEmails(options = {}) {
+    try {
+        const emails = await fetchK1SpeedEmails(options);
+        return emails;
+    }
+    catch (error) {
+        const err = error;
+        console.error('Error fetching emails:', err.message);
+        throw error;
+    }
+}
+// Run directly for testing
+const isMainModule = process.argv[1]?.includes('fetchEmails');
+if (isMainModule) {
+    console.log('Fetching K1 Speed emails...\n');
+    getEmails({ limit: 10 })
+        .then((emails) => {
+        console.log(`\nFetched ${emails.length} email(s):\n`);
+        for (const email of emails) {
+            console.log(`- ${email.subject}`);
+            console.log(`  Date: ${email.date.toLocaleString()}`);
+            console.log();
+        }
+    })
+        .catch((err) => {
+        console.error('Failed:', err.message);
+        process.exit(1);
+    });
+}

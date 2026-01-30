@@ -1,0 +1,11 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const races_controller_1 = require("../controllers/races.controller");
+const router = (0, express_1.Router)();
+router.get('/', (req, res, next) => races_controller_1.racesController.getAllRaces(req, res, next));
+router.get('/locations', (req, res, next) => races_controller_1.racesController.getLocations(req, res, next));
+router.get('/tracks', (req, res, next) => races_controller_1.racesController.getTracks(req, res, next));
+router.post('/refresh', (req, res, next) => races_controller_1.racesController.refreshRaces(req, res, next));
+router.get('/:id', (req, res, next) => races_controller_1.racesController.getRaceById(req, res, next));
+exports.default = router;

@@ -50,6 +50,11 @@ export const racesApi = {
     return response.data;
   },
 
+  getTracks: async (): Promise<ApiResponse<string[]>> => {
+    const response = await api.get('/api/races/tracks');
+    return response.data;
+  },
+
   refresh: async (): Promise<ApiResponse<{ count: number }>> => {
     const response = await api.post('/api/races/refresh');
     return response.data;

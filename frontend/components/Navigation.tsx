@@ -10,6 +10,7 @@ export function Navigation() {
     { href: '/', label: 'Home' },
     { href: '/races', label: 'Races' },
     { href: '/racers', label: 'Racers' },
+    { href: '/tracks', label: 'Tracks' },
   ];
 
   return (

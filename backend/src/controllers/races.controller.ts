@@ -102,6 +102,28 @@ export class RacesController {
   }
 
   /**
+   * GET /api/races/tracks - Get all unique track combinations (location + track)
+   */
+  async getTracks(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const races = await dataService.getAllRaces();
+      const tracks = new Set<string>();
+      
+      races.forEach(race => {
+        const trackId = `${race.raceInfo.location} - ${race.raceInfo.track}`;
+        tracks.add(trackId);
+      });
+      
+      res.json({
+        success: true,
+        data: Array.from(tracks).sort(),
+      } as ApiResponse<string[]>);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
    * POST /api/races/refresh - Force refresh race data
    */
   async refreshRaces(req: Request, res: Response, next: NextFunction): Promise<void> {
