@@ -1,0 +1,8 @@
+{
+  "name": "@k1-speed/shared",
+  "version": "1.0.0",
+  "description": "Shared types for K1 Speed application",
+  "main": "types/index.ts",
+  "types": "types/index.ts",
+  "private": true
+}
