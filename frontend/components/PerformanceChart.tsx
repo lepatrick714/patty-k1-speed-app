@@ -71,15 +71,27 @@ export function PerformanceChart({ races, racerName }: PerformanceChartProps) {
       legend: {
         display: true,
         position: 'top' as const,
+        labels: {
+          color: '#F9FAFB', // Gray-50
+          font: {
+            size: 14,
+          },
+        },
       },
       title: {
         display: true,
         text: `${racerName} - Best Lap Time Progression`,
+        color: '#F9FAFB', // Gray-50
         font: {
           size: 18,
         },
       },
       tooltip: {
+        backgroundColor: '#1F2937', // Gray-800
+        titleColor: '#F9FAFB', // Gray-50
+        bodyColor: '#D1D5DB', // Gray-300
+        borderColor: '#4B5563', // Gray-600
+        borderWidth: 1,
         callbacks: {
           label: function(context: any) {
             return `Time: ${context.parsed.y.toFixed(3)}s`;
@@ -92,18 +104,30 @@ export function PerformanceChart({ races, racerName }: PerformanceChartProps) {
         title: {
           display: true,
           text: 'Best Lap Time (seconds)',
+          color: '#F9FAFB', // Gray-50
         },
         reverse: true, // Lower times are better
         ticks: {
+          color: '#D1D5DB', // Gray-300
           callback: function(value: any) {
             return value.toFixed(2) + 's';
           },
+        },
+        grid: {
+          color: '#4B5563', // Gray-600
         },
       },
       x: {
         title: {
           display: true,
           text: 'Race Date',
+          color: '#F9FAFB', // Gray-50
+        },
+        ticks: {
+          color: '#D1D5DB', // Gray-300
+        },
+        grid: {
+          color: '#4B5563', // Gray-600
         },
       },
     },

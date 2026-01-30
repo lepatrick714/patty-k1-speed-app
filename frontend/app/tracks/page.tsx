@@ -80,9 +80,9 @@ export default function TracksPage() {
   return (
     <>
       <Navigation />
-      <main className="min-h-screen bg-gray-50">
+      <main className="min-h-screen bg-gray-800">
         <div className="container mx-auto px-4 py-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-6">
+          <h1 className="text-3xl font-bold text-gray-50 mb-6">
             Track Performance Analysis
           </h1>
 
@@ -96,10 +96,10 @@ export default function TracksPage() {
                   trackName={selectedTrack}
                 />
               ) : (
-                <div className="bg-white rounded-lg shadow-md p-6 h-full flex items-center justify-center">
-                  <div className="text-center text-gray-500">
+                <div className="bg-gray-700 rounded-lg shadow-xl p-6 h-full border border-gray-600 flex items-center justify-center">
+                  <div className="text-center text-gray-300">
                     <svg
-                      className="mx-auto h-12 w-12 text-gray-400 mb-4"
+                      className="mx-auto h-12 w-12 text-gray-500 mb-4"
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"
@@ -111,7 +111,7 @@ export default function TracksPage() {
                         d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
                       />
                     </svg>
-                    <p>Select a track and racer to view statistics</p>
+                    <p className="text-gray-300">Select a track and racer to view statistics</p>
                   </div>
                 </div>
               )}
@@ -120,21 +120,21 @@ export default function TracksPage() {
             {/* Right Section (2/3 width) */}
             <div className="w-full lg:w-2/3 flex flex-col gap-4">
               {/* Selectors Panel (10% height) */}
-              <div className="bg-white rounded-lg shadow-md p-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="bg-gray-700 rounded-lg shadow-xl p-6 border border-gray-600">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {/* Track Selector */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
                       Select Track
                     </label>
                     <select
                       value={selectedTrack}
                       onChange={handleTrackChange}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 hover:border-blue-400 transition-colors"
+                      className="w-full px-4 py-3 bg-gray-800 border-2 border-blue-500 text-gray-50 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 hover:border-blue-400 transition-all"
                     >
-                      <option value="">Choose a track...</option>
+                      <option value="" className="bg-gray-800 text-gray-400">Choose a track...</option>
                       {tracks.map((track) => (
-                        <option key={track} value={track}>
+                        <option key={track} value={track} className="bg-gray-800 text-gray-50">
                           {track}
                         </option>
                       ))}
@@ -143,24 +143,24 @@ export default function TracksPage() {
 
                   {/* Racer Selector */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
                       Select Racer
                     </label>
                     <select
                       value={selectedRacer}
                       onChange={handleRacerChange}
                       disabled={!selectedTrack}
-                      className={`w-full px-4 py-2 border rounded-md focus:outline-none transition-colors ${
+                      className={`w-full px-4 py-3 rounded-lg transition-all ${
                         !selectedTrack
-                          ? 'bg-gray-100 border-gray-300 text-gray-400 cursor-not-allowed'
-                          : 'border-gray-300 hover:border-blue-400 focus:ring-2 focus:ring-blue-500'
+                          ? 'bg-gray-900 border-2 border-gray-600 text-gray-500 cursor-not-allowed'
+                          : 'bg-gray-800 border-2 border-blue-500 text-gray-50 hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400'
                       }`}
                     >
-                      <option value="">
+                      <option value="" className="bg-gray-800 text-gray-400">
                         {selectedTrack ? 'Choose a racer...' : 'Select track first'}
                       </option>
                       {availableRacers.map((racer) => (
-                        <option key={racer} value={racer}>
+                        <option key={racer} value={racer} className="bg-gray-800 text-gray-50">
                           {racer}
                         </option>
                       ))}
@@ -170,14 +170,14 @@ export default function TracksPage() {
               </div>
 
               {/* Graph Panel (90% height) */}
-              <div className="bg-white rounded-lg shadow-md p-6 flex-1" style={{ minHeight: '500px' }}>
+              <div className="bg-gray-700 rounded-lg shadow-xl p-6 flex-1 border border-gray-600" style={{ minHeight: '500px' }}>
                 {showGraph ? (
                   <PerformanceChart races={filteredRaces} racerName={selectedRacer} />
                 ) : (
                   <div className="h-full flex items-center justify-center">
-                    <div className="text-center text-gray-500">
+                    <div className="text-center text-gray-300">
                       <svg
-                        className="mx-auto h-16 w-16 text-gray-400 mb-4"
+                        className="mx-auto h-16 w-16 text-gray-500 mb-4"
                         fill="none"
                         viewBox="0 0 24 24"
                         stroke="currentColor"
@@ -189,8 +189,8 @@ export default function TracksPage() {
                           d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
                         />
                       </svg>
-                      <p className="text-lg font-medium">No data to display</p>
-                      <p className="mt-2">Please select a track and racer to view performance trends</p>
+                      <p className="text-lg font-medium text-gray-50">No data to display</p>
+                      <p className="mt-2 text-gray-400">Please select a track and racer to view performance trends</p>
                     </div>
                   </div>
                 )}

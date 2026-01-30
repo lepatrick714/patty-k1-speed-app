@@ -5,6 +5,15 @@ Update the `/tracks` page styling with a modern, minimalistic color scheme that 
 
 ---
 
+### ⚠️ DON'T MAKE THIS MISTAKE AGAIN 
+
+- **DO NOT use `sleep 3` then `curl`** - It won't work. The servers are already running.
+- Instead, open the browser at http://localhost:3000/tracks to verify changes
+- Use hot reload - just save files and refresh the browser
+- Check for TypeScript/build errors in the terminal output
+
+---
+
 ## 🎨 NEW COLOR PALETTE (5-6 Colors)
 
 ### Primary Colors
@@ -373,4 +382,210 @@ The implementation is successful when:
 
 ---
 
-**REMEMBER**: The goal is to make the page look MODERN and SLEEK while ensuring active elements are HIGHLY VISIBLE and disabled elements are clearly de-emphasized!
+## 📋 STEP-BY-STEP IMPLEMENTATION
+
+### PHASE 1: Update Main Page Layout (5 minutes)
+1.1. Open `frontend/app/tracks/page.tsx`
+1.2. Update main container background and title colors
+1.3. Save and verify in browser (page should now have dark background)
+
+**Validation:**
+- ✅ Page background is dark gray (not white)
+- ✅ Title text is light/white colored
+- ✅ No console errors
+
+---
+
+### PHASE 2: Update RacerStatsCard Component (10 minutes)
+2.1. Open `frontend/components/RacerStatsCard.tsx`
+2.2. Update card background, borders, and all text colors
+2.3. Update metric value colors (blue-400, emerald-400)
+2.4. Save and verify in browser
+
+**Validation:**
+- ✅ Stats card has dark gray background
+- ✅ All text is readable with good contrast
+- ✅ Metric values have colored accents
+- ✅ Borders are visible but subtle
+
+---
+
+### PHASE 3: Update Selectors Panel (10 minutes) ⚠️ CRITICAL
+3.1. Open `frontend/app/tracks/page.tsx`
+3.2. Update selectors panel container styling
+3.3. **IMPORTANT**: Update active selector with thick blue border
+3.4. Update disabled selector with darker background and gray border
+3.5. Update label colors
+3.6. Save and verify in browser
+
+**Validation:**
+- ✅ Track selector has BRIGHT BLUE BORDER (clearly visible)
+- ✅ Racer selector when DISABLED has dark background and gray border (less visible than active)
+- ✅ Racer selector when ENABLED has bright blue border (matching track selector)
+- ✅ Hover states work correctly
+- ✅ Labels are light gray and readable
+- ✅ Active selector is MORE visible than disabled selector
+
+---
+
+### PHASE 4: Update Graph Panel (10 minutes)
+4.1. Open `frontend/app/tracks/page.tsx`
+4.2. Update graph panel container styling
+4.3. Update placeholder text colors
+4.4. Save and verify in browser
+
+**Validation:**
+- ✅ Graph panel has dark gray background
+- ✅ Placeholder text is visible
+- ✅ Panel matches overall dark theme
+
+---
+
+### PHASE 5: Update PerformanceChart Component (15 minutes)
+5.1. Open `frontend/components/PerformanceChart.tsx`
+5.2. Update chart options object with new colors:
+   - Legend labels color
+   - Title color
+   - Tooltip colors
+   - Axis label colors
+   - Grid line colors
+5.3. Save and verify in browser
+
+**Validation:**
+- ✅ Chart title is light colored and readable
+- ✅ Axis labels are light colored
+- ✅ Grid lines are visible but subtle
+- ✅ Tooltip has dark background with light text
+- ✅ Bar colors remain blue and green (not changed)
+
+---
+
+## ✅ FINAL VALIDATION CHECKLIST
+
+### Visual Verification (Open http://localhost:3000/tracks in browser)
+
+#### Overall Page
+- [ ] Page background is dark gray (#1F2937 or similar)
+- [ ] Page title is light/white colored
+- [ ] Overall aesthetic is modern and sleek (not "hospital white")
+- [ ] All text is readable with good contrast
+
+#### Left Panel - Stats Card
+- [ ] Card background is dark gray (#374151 or similar)
+- [ ] Card has visible border
+- [ ] All labels are light gray (#D1D5DB or similar)
+- [ ] All values are light/white colored
+- [ ] Metric numbers have colored accents (blue, green)
+- [ ] Placeholder state (before selection) is visible and clear
+
+#### Selectors Panel (Top Right)
+- [ ] Panel background is dark gray
+- [ ] Panel has visible border
+- [ ] Track selector (always active):
+  - Has thick blue border (#2563EB)
+  - Blue border is CLEARLY VISIBLE
+  - Background is dark
+  - Text is light/white
+  - Hover state works (border brightens)
+- [ ] Racer selector when DISABLED:
+  - Background is darker than active selector
+  - Border is gray (not blue)
+  - Text is gray
+  - Is LESS visible than active track selector
+- [ ] Racer selector when ENABLED (after selecting track):
+  - Has thick blue border (same as track selector)
+  - Background is dark
+  - Text is light/white
+  - Hover state works
+  - Is clearly visible and matches track selector
+
+#### Graph Panel (Bottom Right)
+- [ ] Panel background is dark gray
+- [ ] Panel has visible border
+- [ ] Placeholder state shows clear message
+- [ ] When graph is displayed:
+  - Chart title is light colored
+  - Axis labels are light colored
+  - Grid lines are visible
+  - Bars are blue and green as before
+  - Tooltip has dark background
+
+### Functional Testing
+- [ ] Select a track - racer selector becomes enabled with blue border
+- [ ] Select a racer - graph and stats appear
+- [ ] Change track - racer resets, graph clears
+- [ ] Select new track and racer - new data displays
+- [ ] Hover over selectors - borders brighten on hover
+- [ ] No console errors or warnings
+
+### Contrast & Accessibility
+- [ ] All text has sufficient contrast for readability
+- [ ] Active elements are MORE visible than disabled elements
+- [ ] Color palette is consistent (only 5-6 colors used)
+- [ ] Design is clean and minimalistic
+
+### Technical Verification
+- [ ] No TypeScript errors
+- [ ] No console warnings
+- [ ] Hot reload works (changes appear on save)
+- [ ] No build errors in terminal
+
+---
+
+## 🔍 TESTING PROCEDURE
+
+1. **Start with Fresh Browser Tab**
+   ```
+   Open: http://localhost:3000/tracks
+   ```
+
+2. **Test Initial State**
+   - Track selector should be clearly visible with blue border
+   - Racer selector should be disabled and less visible (darker, gray)
+   - Both placeholder panels should be visible with clear messages
+
+3. **Test Interaction Flow**
+   - Click track selector - dropdown should be visible with light text
+   - Select a track (e.g., "K1 Speed redmond - T1")
+   - Racer selector should now have blue border (enabled)
+   - Click racer selector - dropdown visible
+   - Select a racer (e.g., "Lam Le")
+   - Graph and stats should appear with new dark theme
+
+4. **Test Visual Contrast**
+   - Take a screenshot
+   - Active selectors should "pop" with blue borders
+   - Disabled selector should fade into background
+   - All text should be easily readable
+
+5. **Compare Before/After**
+   - Original: "hospital white", hard to see selectors
+   - Updated: Modern dark theme, clear blue borders on active elements
+
+---
+
+## 🐛 TROUBLESHOOTING
+
+### Issue: Changes not appearing in browser
+**Solution**: Hard refresh the browser (Ctrl+Shift+R or Cmd+Shift+R)
+
+### Issue: Selector borders not showing
+**Solution**: Check that you used `border-2` (not `border`) for thickness
+
+### Issue: Text not visible on dark background
+**Solution**: Verify you're using light text colors (gray-50, gray-300)
+
+### Issue: Chart not visible
+**Solution**: Check chart options object has all color properties updated
+
+### Issue: Colors look wrong
+**Solution**: Double-check hex codes match the palette in this prompt
+
+---
+
+**REMEMBER**: 
+1. The goal is to make the page look MODERN and SLEEK
+2. Active elements must be HIGHLY VISIBLE with bright blue borders
+3. Disabled elements should be clearly de-emphasized (darker, grayer)
+4. Verify in browser after EACH phase - don't wait until the end!
+5. DO NOT use curl/sleep to test - just refresh the browser!

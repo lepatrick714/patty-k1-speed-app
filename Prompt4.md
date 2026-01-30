@@ -1,0 +1,1 @@
+Another prompt! See the image, For the Best Lap Graph the bar graph is way too vertically squshed Please use up the whole panel width and height!
