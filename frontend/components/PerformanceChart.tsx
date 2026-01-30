@@ -41,6 +41,16 @@ export function PerformanceChart({ races, racerName }: PerformanceChartProps) {
 
   const bestTime = Math.min(...chartData.map(d => d.time!));
 
+  // Calculate Y-axis range for better scaling
+  const times = chartData.map(d => d.time!);
+  const minTime = Math.min(...times);
+  const maxTime = Math.max(...times);
+  const timeRange = maxTime - minTime;
+  const padding = timeRange > 0 ? timeRange * 0.15 : 1; // 15% padding, or 1 second minimum
+
+  // Debug: Log the Y-axis range
+  console.log('Chart Y-axis range:', { minTime, maxTime, timeRange, padding, min: minTime - padding, max: maxTime + padding });
+
   // Format date labels
   const formatDate = (dateStr: Date) => {
     const date = new Date(dateStr);
@@ -60,6 +70,8 @@ export function PerformanceChart({ races, racerName }: PerformanceChartProps) {
           d.time === bestTime ? '#059669' : '#2563EB'
         ),
         borderWidth: 2,
+        barPercentage: 0.8,
+        categoryPercentage: 0.9,
       },
     ],
   };
@@ -101,6 +113,8 @@ export function PerformanceChart({ races, racerName }: PerformanceChartProps) {
     },
     scales: {
       y: {
+        min: minTime - padding,
+        max: maxTime + padding,
         title: {
           display: true,
           text: 'Best Lap Time (seconds)',
@@ -112,9 +126,13 @@ export function PerformanceChart({ races, racerName }: PerformanceChartProps) {
           callback: function(value: any) {
             return value.toFixed(2) + 's';
           },
+          stepSize: timeRange > 0 ? timeRange / 8 : 0.5,
         },
         grid: {
           color: '#4B5563', // Gray-600
+          drawBorder: true,
+          drawOnChartArea: true,
+          drawTicks: true,
         },
       },
       x: {
@@ -125,16 +143,19 @@ export function PerformanceChart({ races, racerName }: PerformanceChartProps) {
         },
         ticks: {
           color: '#D1D5DB', // Gray-300
+          maxRotation: 45,
+          minRotation: 0,
         },
         grid: {
           color: '#4B5563', // Gray-600
+          drawBorder: true,
         },
       },
     },
   };
 
   return (
-    <div className="h-full w-full">
+    <div style={{ width: '100%', height: '100%', minHeight: '600px' }}>
       <Bar data={data} options={options} />
     </div>
   );

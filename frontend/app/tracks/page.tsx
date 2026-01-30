@@ -86,7 +86,7 @@ export default function TracksPage() {
             Track Performance Analysis
           </h1>
 
-          <div className="flex flex-col lg:flex-row gap-6" style={{ minHeight: '600px' }}>
+          <div className="flex flex-col lg:flex-row gap-6" style={{ minHeight: '800px' }}>
             {/* Left Panel - Stats Card (1/3 width) */}
             <div className="w-full lg:w-1/3">
               {showGraph ? (
@@ -170,7 +170,7 @@ export default function TracksPage() {
               </div>
 
               {/* Graph Panel (90% height) */}
-              <div className="bg-gray-700 rounded-lg shadow-xl p-6 flex-1 border border-gray-600" style={{ minHeight: '500px' }}>
+              <div className="bg-gray-700 rounded-lg shadow-xl p-6 border border-gray-600" style={{ height: '650px' }}>
                 {showGraph ? (
                   <PerformanceChart races={filteredRaces} racerName={selectedRacer} />
                 ) : (
